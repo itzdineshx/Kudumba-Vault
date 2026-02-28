@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Users, Plus, Trash2, FileText } from "lucide-react";
+import { Users, Plus, Trash2, FileText, Wallet } from "lucide-react";
 
 const MembersPage = () => {
   const { members, documents, addMember, removeMember } = useVault();
@@ -17,19 +17,29 @@ const MembersPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [relationship, setRelationship] = useState("Spouse");
+  const [walletAddress, setWalletAddress] = useState("");
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!name || !email) return;
-    addMember(name, email, relationship);
-    toast({ title: "Member added!", description: `${name} has been added to your family vault.` });
-    setOpen(false);
-    setName("");
-    setEmail("");
+    try {
+      await addMember(name, email, relationship, walletAddress || undefined);
+      toast({ title: "Member added!", description: `${name} has been added to your family vault.` });
+      setOpen(false);
+      setName("");
+      setEmail("");
+      setWalletAddress("");
+    } catch (err: any) {
+      toast({ title: "Failed to add member", description: err?.message || "Something went wrong.", variant: "destructive" });
+    }
   };
 
-  const handleRemove = (id: string, memberName: string) => {
-    removeMember(id);
-    toast({ title: "Member removed", description: `${memberName} has been removed from the vault.` });
+  const handleRemove = async (id: string, memberName: string) => {
+    try {
+      await removeMember(id);
+      toast({ title: "Member removed", description: `${memberName} has been removed from the vault.` });
+    } catch (err: any) {
+      toast({ title: "Failed to remove member", description: err?.message || "Something went wrong.", variant: "destructive" });
+    }
   };
 
   return (
@@ -57,12 +67,26 @@ const MembersPage = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5" /> Wallet Address <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Input value={walletAddress} onChange={e => setWalletAddress(e.target.value)} placeholder="0x..." className="font-mono text-sm" />
+                <p className="text-[11px] text-muted-foreground">Required for on-chain document sharing</p>
+              </div>
               <Button onClick={handleAdd} className="w-full" disabled={!name || !email}>Add to Family Vault</Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
+      {members.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <Users className="h-12 w-12 text-muted-foreground/40 mb-4" />
+            <h3 className="text-lg font-semibold">No family members yet</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Add family members to share documents securely.</p>
+          </CardContent>
+        </Card>
+      ) : (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {members.map(m => {
           const accessibleDocs = documents.filter(d => d.sharedWith.some(s => s.memberId === m.id && !s.revoked));
@@ -81,9 +105,15 @@ const MembersPage = () => {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="mt-4 flex items-center gap-2">
+                <div className="mt-4 flex items-center gap-2 flex-wrap">
                   <Badge variant="secondary">{m.relationship}</Badge>
                   <Badge variant="outline" className="gap-1"><FileText className="h-3 w-3" />{accessibleDocs.length} doc{accessibleDocs.length !== 1 ? "s" : ""}</Badge>
+                  {m.walletAddress && (
+                    <Badge variant="outline" className="gap-1 font-mono text-[10px]">
+                      <Wallet className="h-3 w-3" />
+                      {m.walletAddress.slice(0, 6)}…{m.walletAddress.slice(-4)}
+                    </Badge>
+                  )}
                 </div>
                 {accessibleDocs.length > 0 && (
                   <div className="mt-3 space-y-1">
@@ -98,6 +128,7 @@ const MembersPage = () => {
           );
         })}
       </div>
+      )}
     </div>
   );
 };

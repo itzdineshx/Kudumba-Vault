@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { VaultProvider, useVault } from "@/context/VaultContext";
+import { BlockchainProvider } from "@/context/BlockchainContext";
 import AppLayout from "@/components/AppLayout";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
@@ -18,13 +19,15 @@ import NotFound from "@/pages/NotFound";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoggedIn } = useVault();
+  const { isLoggedIn, loading } = useVault();
+  if (loading) return <div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
   if (!isLoggedIn) return <Navigate to="/login" replace />;
   return <AppLayout>{children}</AppLayout>;
 };
 
 const LoginGuard = () => {
-  const { isLoggedIn } = useVault();
+  const { isLoggedIn, loading } = useVault();
+  if (loading) return <div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
   if (isLoggedIn) return <Navigate to="/dashboard" replace />;
   return <LoginPage />;
 };
@@ -36,6 +39,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <VaultProvider>
+          <BlockchainProvider>
           <Routes>
             <Route path="/login" element={<LoginGuard />} />
             <Route path="/" element={<Navigate to="/login" replace />} />
@@ -48,6 +52,7 @@ const App = () => (
             <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </BlockchainProvider>
         </VaultProvider>
       </BrowserRouter>
     </TooltipProvider>

@@ -1,21 +1,25 @@
 import { useVault } from "@/context/VaultContext";
+import { useBlockchain } from "@/context/BlockchainContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CATEGORY_INFO, DocumentCategory } from "@/types/vault";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FileText, Share2, Users, ShieldAlert, Plus, Clock } from "lucide-react";
+import { FileText, Share2, Users, ShieldAlert, Plus, Clock, LinkIcon, Wallet, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
+import { formatHash } from "@/services/crypto";
 
 const DashboardPage = () => {
-  const { documents, members, alerts, userRole, familyName } = useVault();
+  const { documents, members, alerts, userRole, familyName, userName } = useVault();
+  const { status, wallet, isContractReady, transactions, connectWallet } = useBlockchain();
   const navigate = useNavigate();
 
   const sharedDocs = documents.filter(d => d.privacy === "shared");
+  const onChainDocs = documents.filter(d => d.blockchain?.verified);
   const stats = [
     { label: "Total Documents", value: documents.length, icon: FileText, color: "bg-primary/10 text-primary" },
-    { label: "Shared Documents", value: sharedDocs.length, icon: Share2, color: "bg-secondary text-secondary-foreground" },
+    { label: "On-Chain Verified", value: onChainDocs.length, icon: LinkIcon, color: "bg-green-500/10 text-green-500" },
     { label: "Family Members", value: members.length, icon: Users, color: "bg-accent/10 text-accent" },
     { label: "Security Alerts", value: alerts.length, icon: ShieldAlert, color: "bg-destructive/10 text-destructive" },
   ];
@@ -32,8 +36,8 @@ const DashboardPage = () => {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Welcome, {userRole === "owner" ? "John" : "Family Member"}</h1>
-          <p className="mt-1 text-muted-foreground">{familyName} · Secure Vault Dashboard</p>
+          <h1 className="text-3xl font-bold">Welcome, {userName || (userRole === "owner" ? "Owner" : "Member")}</h1>
+          <p className="mt-1 text-muted-foreground">{familyName || "Family Vault"} · Secure Vault Dashboard</p>
         </div>
         {userRole === "owner" && (
           <Button onClick={() => navigate("/upload")} size="lg" className="gap-2">
@@ -80,8 +84,14 @@ const DashboardPage = () => {
       <div>
         <h2 className="mb-4 text-xl font-semibold">Recent Activity</h2>
         <Card>
-          <CardContent className="divide-y p-0">
-            {recentActivity.map(a => (
+          <CardContent className={recentActivity.length > 0 ? "divide-y p-0" : "py-10 text-center"}>
+            {recentActivity.length === 0 ? (
+              <div>
+                <Clock className="mx-auto h-8 w-8 text-muted-foreground/40 mb-2" />
+                <p className="text-sm text-muted-foreground">No activity yet. Upload a document to get started.</p>
+              </div>
+            ) : (
+            recentActivity.map(a => (
               <div key={a.id} className="flex items-center justify-between px-5 py-3.5">
                 <div className="flex items-center gap-3">
                   <Clock className="h-4 w-4 text-muted-foreground" />
@@ -92,7 +102,81 @@ const DashboardPage = () => {
                 </div>
                 <span className="text-xs text-muted-foreground">{format(new Date(a.timestamp), "MMM d, HH:mm")}</span>
               </div>
-            ))}
+            ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Blockchain Status */}
+      <div>
+        <h2 className="mb-4 text-xl font-semibold">Blockchain Status</h2>
+        <Card>
+          <CardContent className="p-5">
+            {status === "connected" ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
+                      <Wallet className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Wallet Connected</p>
+                      <p className="font-mono text-xs text-muted-foreground">{wallet ? formatHash(wallet.address, 6) : ""}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{wallet ? parseFloat(wallet.balance).toFixed(4) : "0"} ETH</p>
+                    <p className="text-xs text-muted-foreground">{wallet?.network}</p>
+                  </div>
+                </div>
+
+                {isContractReady && (
+                  <div className="rounded-lg bg-muted p-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Smart Contract Active</span>
+                      <Badge variant="outline" className="gap-1 text-[10px] border-green-500/30 text-green-500">
+                        <CheckCircle2 className="h-2.5 w-2.5" /> Deployed
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+
+                {transactions.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Recent Transactions</p>
+                    <div className="space-y-1.5">
+                      {transactions.slice(-3).reverse().map(tx => (
+                        <div key={tx.hash} className="flex items-center justify-between rounded-md bg-muted px-3 py-2 text-xs">
+                          <span className="font-mono">{formatHash(tx.hash, 6)}</span>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={tx.status === "confirmed" ? "default" : "secondary"} className="text-[10px]">
+                              {tx.status}
+                            </Badge>
+                            <span className="text-muted-foreground">Block #{tx.blockNumber}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                    <Wallet className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Connect Wallet</p>
+                    <p className="text-xs text-muted-foreground">Link MetaMask for on-chain document security</p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" onClick={connectWallet} className="gap-2">
+                  <Wallet className="h-3.5 w-3.5" /> Connect
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
