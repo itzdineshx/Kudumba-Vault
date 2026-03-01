@@ -171,27 +171,11 @@ For users who want maximum security verification:
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   React SPA     │    │   Express API   │    │   MongoDB       │
-│   (Frontend)    │◄──►│   (Backend)     │◄──►│   (Database)    │
-│                 │    │                 │    │                 │
-│ • Component     │    │ • REST API      │    │ • Documents     │
-│ • State Mgmt    │    │ • Auth/JWT      │    │ • Users         │
-│ • UI/UX         │    │ • File Upload    │    │ • Members       │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 ▼
-                    ┌─────────────────┐
-                    │   Ethereum      │
-                    │   Blockchain    │
-                    │                 │
-                    │ • Smart Contract│
-                    │ • Hash Storage  │
-                    │ • Verification  │
-                    └─────────────────┘
-```
+![System Architecture](public/ss_img/architecture.png)
+*High-level system architecture showing frontend, backend, database, and blockchain integration*
+
+![Application Workflow](public/ss_img/workflow.png)
+*Complete application workflow from user registration to document verification*
 
 ### Frontend Architecture
 - **React 18** with TypeScript for type safety
