@@ -130,28 +130,44 @@ For users who want maximum security verification:
 ## 📸 Screenshots & Animations
 
 ### 🏠 **Dashboard Overview**
-![Dashboard Animation](https://via.placeholder.com/800x600/1a1a2e/ffffff?text=Dashboard+Animation)
-*Smooth fade-in animations reveal document categories with hover effects and loading states*
+![Dashboard](public/ss_img/dashboard.png)
+*Main dashboard showing document categories and family vault overview*
 
 ### 📤 **Category-Aware Upload**
-![Upload Interface](https://via.placeholder.com/800x600/16213e/ffffff?text=Upload+Interface)
-*Dynamic form transitions between categories with contextual field animations*
+![Upload Interface](public/ss_img/upload.png)
+*Dynamic form for uploading documents with category selection*
 
 ### 🔍 **Document Management**
-![Documents View](https://via.placeholder.com/800x600/0f3460/ffffff?text=Documents+View)
-*Grid layout with card hover animations and smooth filtering transitions*
+![Documents View](public/ss_img/logs.png)
+*Document listing with search and filtering capabilities*
 
 ### 🔐 **Security Pipeline**
-![Encryption Process](https://via.placeholder.com/800x600/e94560/ffffff?text=Encryption+Process)
-*Step-by-step visual encryption process with progress animations*
+![Encryption Process](public/ss_img/hashing_document.png)
+*Document encryption and hashing process visualization*
 
 ### 👥 **Family Sharing**
-![Sharing Interface](https://via.placeholder.com/800x600/2c2c54/ffffff?text=Sharing+Interface)
-*Interactive member selection with permission toggle animations*
+![Sharing Interface](public/ss_img/sharing.png)
+*Interface for sharing documents with family members*
 
 ### ⛓️ **Blockchain Verification**
-![Blockchain Integration](https://via.placeholder.com/800x600/474787/ffffff?text=Blockchain+Integration)
-*Real-time transaction monitoring with Ethereum network animations*
+![Blockchain Integration](public/ss_img/backup.png)
+*Blockchain backup and verification features*
+
+### 🔐 **Authentication**
+![Login](public/ss_img/login.png)
+*Secure login interface for family members*
+
+### 🚨 **Alerts & Notifications**
+![Alerts](public/ss_img/alerts.png)
+*Real-time alerts and notifications system*
+
+### 🔄 **Recovery Options**
+![Recovery](public/ss_img/recovery.png)
+*Document recovery and backup restoration*
+
+### 🔑 **Authorization**
+![Auth](public/ss_img/auth.png)
+*User authorization and permission management*
 
 ## 🏗️ Architecture
 
