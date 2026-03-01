@@ -6,6 +6,16 @@ export type PrivacyLevel = "private" | "shared";
 
 export type Permission = "view-only" | "time-limited";
 
+export interface BlockchainRecord {
+  txHash: string;
+  blockNumber: number;
+  timestamp: number;
+  gasUsed: string;
+  explorerUrl?: string;
+  verified: boolean;
+  onChainOwner?: string;
+}
+
 export interface VaultDocument {
   id: string;
   name: string;
@@ -17,6 +27,8 @@ export interface VaultDocument {
   size: string;
   sharedWith: SharedAccess[];
   accessLog: AccessLogEntry[];
+  blockchain?: BlockchainRecord;
+  encryptionKey?: string;
 }
 
 export interface SharedAccess {
@@ -44,6 +56,9 @@ export interface FamilyMember {
   role: UserRole;
   avatarInitials: string;
   addedAt: string;
+  walletAddress?: string;
+  /** Whether this member has a managed (auto-generated) wallet */
+  hasWallet?: boolean;
 }
 
 export interface SecurityAlert {
