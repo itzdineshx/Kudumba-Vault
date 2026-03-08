@@ -115,8 +115,9 @@ router.get("/:id/file", async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    res.set("Content-Type", "application/octet-stream");
-    res.set("Content-Disposition", `attachment; filename="${doc.originalName || doc.name}"`);
+    res.set("Content-Type", doc.mimeType || "application/octet-stream");
+    const downloadName = doc.originalName || doc.name;
+    res.set("Content-Disposition", `attachment; filename="${encodeURIComponent(downloadName)}"`);
     res.send(doc.fileData);
   } catch (err) {
     res.status(500).json({ error: "Failed to download file" });
