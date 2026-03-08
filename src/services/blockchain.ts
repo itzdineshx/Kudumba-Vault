@@ -23,17 +23,17 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
   sepolia: {
     chainId: 11155111,
     name: "Ethereum Sepolia Testnet",
-    rpcUrl: "https://ethereum-sepolia.publicnode.com",
-    explorerUrl: "https://sepolia.etherscan.io",
-    contractAddress: "", // Set after deployment
+    rpcUrl: import.meta.env.VITE_SEPOLIA_RPC_URL || "https://ethereum-sepolia.publicnode.com",
+    explorerUrl: import.meta.env.VITE_SEPOLIA_EXPLORER_URL || "https://sepolia.etherscan.io",
+    contractAddress: import.meta.env.VITE_SEPOLIA_CONTRACT_ADDRESS || "",
     currency: { name: "Sepolia ETH", symbol: "SEP", decimals: 18 },
   },
   localhost: {
     chainId: 31337,
     name: "Hardhat Local",
-    rpcUrl: "http://127.0.0.1:8545",
+    rpcUrl: import.meta.env.VITE_LOCALHOST_RPC_URL || "http://127.0.0.1:8545",
     explorerUrl: "",
-    contractAddress: "",
+    contractAddress: import.meta.env.VITE_LOCALHOST_CONTRACT_ADDRESS || "",
     currency: { name: "ETH", symbol: "ETH", decimals: 18 },
   },
 };
