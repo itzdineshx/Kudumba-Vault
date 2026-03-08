@@ -230,7 +230,7 @@ export async function reEncryptWallet(
  */
 export function createSignerFromKey(
   privateKey: string,
-  rpcUrl: string = "https://rpc.sepolia.org"
+  rpcUrl: string = import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org"
 ): ethers.Wallet {
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   return new ethers.Wallet(privateKey, provider);
