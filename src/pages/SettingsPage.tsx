@@ -1,11 +1,11 @@
 /**
  * Settings Page — PIN & Biometric setup for document verification
  * 
- * Members can:
- * - Set / change / remove a numeric PIN (4-8 digits)
- * - Register / remove biometric credentials (fingerprint / face ID)
+ * All family members (owner + members) can:
+ * - Set / change / remove a numeric PIN (4-8 digits) — shared across the family
+ * - Register / remove biometric credentials (fingerprint / face ID) — synced family-wide
  * 
- * These are required before viewing or downloading shared documents.
+ * These are required before viewing or downloading any documents.
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -169,7 +169,7 @@ const SettingsPage = () => {
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="mt-1 text-muted-foreground">
-          Set up document verification to securely access shared documents
+          Set up PIN &amp; biometric verification for your family vault. Settings are shared across all family members.
         </p>
       </div>
 
@@ -216,8 +216,8 @@ const SettingsPage = () => {
             <div>
               <h3 className="font-semibold">Document Verification</h3>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                Before you can view or download documents, you'll need to verify your identity using a PIN or biometric (fingerprint / face ID).
-                This prevents unauthorized access even if someone gains access to your session.
+                Before anyone in your family can view or download documents, they must verify their identity using a PIN or biometric (fingerprint / face ID).
+                These settings are synced across all accounts in your family.
               </p>
               <div className="mt-3 flex gap-2">
                 {status?.hasPin ? (
@@ -243,7 +243,7 @@ const SettingsPage = () => {
             <KeyRound className="h-5 w-5" /> PIN Verification
           </CardTitle>
           <CardDescription>
-            Set a 4-8 digit PIN to verify your identity before accessing documents
+            Set a 4-8 digit PIN shared across all family members to verify identity before accessing documents
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -349,7 +349,7 @@ const SettingsPage = () => {
             <Fingerprint className="h-5 w-5" /> Biometric Verification
           </CardTitle>
           <CardDescription>
-            Use your fingerprint or face ID for quick verification
+            Use fingerprint or face ID for quick verification — each family member can register their own device
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -426,6 +426,9 @@ const SettingsPage = () => {
             <div className="text-sm text-muted-foreground space-y-1">
               <p className="font-medium text-foreground">How it works</p>
               <ul className="list-disc list-inside space-y-0.5 text-xs">
+                <li>PIN and biometric settings are synced across all family accounts</li>
+                <li>The same PIN works for the family head and every approved member</li>
+                <li>Each family member can register their own biometric (fingerprint / face ID) from their device</li>
                 <li>Your PIN is hashed (SHA-256) before leaving your device — the server never sees your actual PIN</li>
                 <li>Biometric data never leaves your device — only a cryptographic proof is shared</li>
                 <li>After successful verification, your session stays unlocked for 15 minutes</li>

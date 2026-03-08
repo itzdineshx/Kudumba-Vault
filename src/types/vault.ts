@@ -29,6 +29,8 @@ export interface VaultDocument {
   accessLog: AccessLogEntry[];
   blockchain?: BlockchainRecord;
   encryptionKey?: string;
+  originalName?: string;
+  mimeType?: string;
 }
 
 export interface SharedAccess {

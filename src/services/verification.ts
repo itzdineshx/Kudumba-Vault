@@ -1,10 +1,12 @@
 /**
  * Verification Service for Kudumba Vault
  * 
- * Provides PIN and biometric (WebAuthn) verification for family members
+ * Provides PIN and biometric (WebAuthn) verification for all family members
  * before they can view or download documents.
  * 
  * Security model:
+ * - PIN is shared family-wide: set once, used by all members
+ * - Biometrics are synced: each member registers their own device, all are accepted family-wide
  * - PIN is hashed client-side (SHA-256) before sending to server
  * - WebAuthn uses device biometrics (fingerprint/face) with challenge-response
  * - Verification state is kept in-memory only (sessionStorage for session persistence)

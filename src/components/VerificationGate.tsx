@@ -1,8 +1,8 @@
 /**
  * VerificationGate — reusable dialog for PIN/Biometric verification
  * 
- * Used before allowing document view/download for family members.
- * Members must first set up a PIN or biometric in Settings.
+ * Used before allowing document view/download for ALL family members (owner + members).
+ * PIN and biometric settings are synced family-wide.
  * Once verified, the session stays unlocked for 15 minutes.
  */
 
@@ -132,7 +132,7 @@ export default function VerificationGate({ open, onClose, onVerified, title }: V
             {title || "Verify Your Identity"}
           </DialogTitle>
           <DialogDescription>
-            Enter your PIN or use biometrics to access this document
+            Enter your family PIN or use biometrics to access this document
           </DialogDescription>
         </DialogHeader>
 
@@ -150,7 +150,7 @@ export default function VerificationGate({ open, onClose, onVerified, title }: V
               </div>
               <h3 className="font-semibold">Setup Required</h3>
               <p className="text-sm text-muted-foreground">
-                You need to set up a PIN or biometric verification before you can view documents. This protects your family's sensitive data.
+                Your family vault needs a PIN or biometric set up before anyone can view documents. Go to Settings to set up verification — it will apply to all family members.
               </p>
             </div>
             <Button
