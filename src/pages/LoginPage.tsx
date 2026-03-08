@@ -109,10 +109,9 @@ const LoginPage = () => {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted to-background p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }} className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
-            <Shield className="h-8 w-8" />
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }} className="mx-auto mb-3">
+            <img src="/kudumba-logo.png" alt="Kudumba Vault" className="h-32 w-auto mx-auto object-contain" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-foreground">Kudumba Vault</h1>
           <p className="mt-2 text-muted-foreground">Blockchain-secured document & credential vault</p>
         </div>
 

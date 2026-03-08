@@ -1,5 +1,7 @@
 # 🏛️ Kudumba-Vault
 
+![logo](public/kudumba-logo.png)
+
 > **Secure Family Document Vault with Blockchain Verification**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

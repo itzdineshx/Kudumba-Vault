@@ -26,18 +26,12 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   const sidebarContent = (
     <>
-      <div className="flex items-center justify-between px-5 py-5">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--sidebar-primary))]">
-            <Shield className="h-5 w-5 text-[hsl(var(--sidebar-primary-foreground))]" />
-          </div>
-          <div>
-            <p className="text-sm font-bold">Family Vault</p>
-            <p className="text-[11px] text-[hsl(var(--sidebar-foreground))]/60">{familyName || "Family Vault"}</p>
-          </div>
-        </div>
-        {/* Mobile close button */}
-        <button onClick={() => setSidebarOpen(false)} className="rounded-lg p-1.5 lg:hidden hover:bg-[hsl(var(--sidebar-accent))]">
+      <div className="flex flex-col items-center px-5 pt-6 pb-3">
+        <img src="/kudumba-logo.png" alt="Kudumba Vault" className="h-20 w-auto object-contain mb-1" />
+        <p className="text-[11px] text-[hsl(var(--sidebar-foreground))]/60">{familyName || "Family Vault"}</p>
+      </div>
+      <div className="flex justify-end px-3 pb-1 lg:hidden">
+        <button onClick={() => setSidebarOpen(false)} className="rounded-lg p-1.5 hover:bg-[hsl(var(--sidebar-accent))]">
           <X className="h-5 w-5" />
         </button>
       </div>
