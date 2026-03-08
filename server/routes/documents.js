@@ -9,6 +9,20 @@ import { auth } from "../middleware/auth.js";
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
+// Extension-to-MIME fallback map
+const EXT_MIME = {
+  pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+  gif: "image/gif", webp: "image/webp", svg: "image/svg+xml", csv: "text/csv",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  xls: "application/vnd.ms-excel", doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  txt: "text/plain", json: "application/json", html: "text/html",
+};
+function mimeFromName(name) {
+  const ext = (name || "").split(".").pop()?.toLowerCase();
+  return (ext && EXT_MIME[ext]) || "application/octet-stream";
+}
+
 // All routes require auth
 router.use(auth);
 
@@ -115,8 +129,9 @@ router.get("/:id/file", async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    res.set("Content-Type", doc.mimeType || "application/octet-stream");
     const downloadName = doc.originalName || doc.name;
+    const mime = doc.mimeType || mimeFromName(downloadName);
+    res.set("Content-Type", mime);
     res.set("Content-Disposition", `attachment; filename="${encodeURIComponent(downloadName)}"`);
     res.send(doc.fileData);
   } catch (err) {

@@ -292,7 +292,7 @@ const DocumentsPage = () => {
                   </Button>
                 )}
                 {/* View in browser — for PDFs, images, etc. */}
-                {selected.encryptionKey && isViewableType(selected.mimeType) && (
+                {selected.encryptionKey && isViewableType(resolveMimeType(selected)) && (
                   <Button
                     variant="outline"
                     className="flex-1 gap-1"
@@ -312,7 +312,8 @@ const DocumentsPage = () => {
                         const encryptedBuf = await documentsApi.downloadFile(selected.id);
                         const key = await importKey(selected.encryptionKey!);
                         const decrypted = await decryptFile(encryptedBuf, key);
-                        const blob = new Blob([decrypted], { type: selected.mimeType || "application/octet-stream" });
+                        const mime = resolveMimeType(selected);
+                        const blob = new Blob([decrypted], { type: mime });
                         const url = URL.createObjectURL(blob);
                         setViewerDoc(selected);
                         setViewerUrl(url);
@@ -348,11 +349,12 @@ const DocumentsPage = () => {
                         const encryptedBuf = await documentsApi.downloadFile(selected.id);
                         const key = await importKey(selected.encryptionKey);
                         const decrypted = await decryptFile(encryptedBuf, key);
-                        const blob = new Blob([decrypted], { type: selected.mimeType || "application/octet-stream" });
+                        const mime = resolveMimeType(selected);
+                        const blob = new Blob([decrypted], { type: mime });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement("a");
                         a.href = url;
-                        a.download = selected.originalName || selected.name;
+                        a.download = resolveFilename(selected);
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
@@ -450,7 +452,7 @@ const DocumentsPage = () => {
                 onClick={() => {
                   const a = document.createElement("a");
                   a.href = viewerUrl;
-                  a.download = viewerDoc.originalName || viewerDoc.name;
+                  a.download = resolveFilename(viewerDoc);
                   document.body.appendChild(a);
                   a.click();
                   document.body.removeChild(a);
@@ -474,7 +476,7 @@ const DocumentsPage = () => {
             </div>
           </div>
           <div className="flex-1 overflow-auto p-4">
-            {viewerDoc.mimeType?.startsWith("image/") ? (
+            {resolveMimeType(viewerDoc).startsWith("image/") ? (
               <div className="flex h-full items-center justify-center">
                 <img src={viewerUrl} alt={viewerDoc.name} className="max-h-full max-w-full object-contain rounded-lg" />
               </div>
@@ -501,6 +503,48 @@ function isViewableType(mimeType?: string): boolean {
     mimeType.startsWith("image/") ||
     mimeType.startsWith("text/")
   );
+}
+
+/** Common extension-to-MIME mapping */
+const EXT_MIME: Record<string, string> = {
+  pdf: "application/pdf",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+  svg: "image/svg+xml",
+  csv: "text/csv",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  xls: "application/vnd.ms-excel",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  txt: "text/plain",
+  json: "application/json",
+  html: "text/html",
+};
+
+/** Resolve the MIME type for a document, falling back to extension or fileType */
+function resolveMimeType(doc: VaultDocument): string {
+  if (doc.mimeType) return doc.mimeType;
+  const name = doc.originalName || doc.name || "";
+  const ext = name.split(".").pop()?.toLowerCase();
+  if (ext && EXT_MIME[ext]) return EXT_MIME[ext];
+  // Try fileType field (sometimes stores the extension like "pdf" or filename)
+  const ft = (doc.fileType || "").toLowerCase().replace(/^\./, "");
+  if (EXT_MIME[ft]) return EXT_MIME[ft];
+  return "application/octet-stream";
+}
+
+/** Resolve the download filename, ensuring it has the correct extension */
+function resolveFilename(doc: VaultDocument): string {
+  if (doc.originalName) return doc.originalName;
+  const mime = resolveMimeType(doc);
+  const baseName = doc.name.replace(/\s+/g, "_");
+  // Find extension from MIME
+  const entry = Object.entries(EXT_MIME).find(([, m]) => m === mime);
+  if (entry) return `${baseName}.${entry[0]}`;
+  return baseName;
 }
 
 export default DocumentsPage;
