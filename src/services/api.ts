@@ -31,7 +31,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
 
 export interface AuthResponse {
   token: string;
-  user: { id: string; name: string; email: string; familyName: string; role: string };
+  user: { id: string; name: string; email: string; familyName: string; role: string; familyId?: string };
   /** Present for member-role users — encrypted wallet data for client-side decryption */
   encryptedWallet?: {
     encryptedKey: string;
@@ -41,6 +41,11 @@ export interface AuthResponse {
   };
 }
 
+export interface JoinResponse {
+  message: string;
+  pending: boolean;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -48,6 +53,15 @@ export interface UserProfile {
   familyName: string;
   role: string;
   walletAddress?: string;
+  familyId?: string;
+}
+
+export interface PendingMember {
+  id: string;
+  name: string;
+  email: string;
+  relationship: string;
+  createdAt: string;
 }
 
 export const authApi = {
@@ -61,6 +75,14 @@ export const authApi = {
 
   login(data: { email: string; password: string }): Promise<AuthResponse> {
     return request("/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  },
+
+  join(data: { name: string; email: string; password: string; familyId: string; relationship: string }): Promise<JoinResponse> {
+    return request("/auth/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -185,6 +207,26 @@ export const membersApi = {
 
   delete(id: string): Promise<any> {
     return request(`/members/${id}`, { method: "DELETE" });
+  },
+
+  pending(): Promise<PendingMember[]> {
+    return request("/members/pending");
+  },
+
+  approve(id: string, data?: { encryptedWallet?: any }): Promise<any> {
+    return request(`/members/${id}/approve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data || {}),
+    });
+  },
+
+  reject(id: string): Promise<any> {
+    return request(`/members/${id}/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
   },
 };
 
