@@ -316,8 +316,8 @@ const AlertsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {allLogs.map(l => (
-                <TableRow key={l.id}>
+              {allLogs.map((l, i) => (
+                <TableRow key={`${l.id}-${l.docName}-${i}`}>
                   <TableCell className="font-medium">{l.userName}</TableCell>
                   <TableCell>{l.action}</TableCell>
                   <TableCell>{l.docName}</TableCell>

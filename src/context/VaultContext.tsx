@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { VaultDocument, FamilyMember, SecurityAlert, UserRole, DocumentCategory, PrivacyLevel, BlockchainRecord } from "@/types/vault";
-import { authApi, documentsApi, membersApi, alertsApi } from "@/services/api";
+import { authApi, documentsApi, membersApi, alertsApi, PendingMember } from "@/services/api";
 
 interface VaultContextType {
   isLoggedIn: boolean;
@@ -9,8 +9,10 @@ interface VaultContextType {
   userName: string;
   userEmail: string;
   familyName: string;
+  familyId: string;
   documents: VaultDocument[];
   members: FamilyMember[];
+  pendingMembers: PendingMember[];
   alerts: SecurityAlert[];
   isFirstTime: boolean;
   loading: boolean;
@@ -25,6 +27,8 @@ interface VaultContextType {
   revokeAccess: (docId: string, memberId: string) => Promise<void>;
   addMember: (name: string, email: string, relationship: string, password: string, encryptedWallet?: any) => Promise<void>;
   removeMember: (id: string) => Promise<void>;
+  approveMember: (id: string, encryptedWallet?: any) => Promise<void>;
+  rejectMember: (id: string) => Promise<void>;
   addAlert: (alert: Omit<SecurityAlert, "id">) => Promise<void>;
   resetData: () => void;
   refreshData: () => Promise<void>;
@@ -39,8 +43,10 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [familyName, setFamilyName] = useState("");
+  const [familyId, setFamilyId] = useState("");
   const [documents, setDocuments] = useState<VaultDocument[]>([]);
   const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [isFirstTime, setIsFirstTime] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -66,6 +72,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
         setUserName(user.name);
         setUserEmail(user.email);
         setFamilyName(user.familyName);
+        setFamilyId(user.familyId || "");
         setUserRole(user.role as UserRole);
         setIsLoggedIn(true);
       })
@@ -89,6 +96,14 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       setDocuments(docs as VaultDocument[]);
       setMembers(mems as FamilyMember[]);
       setAlerts(alts as SecurityAlert[]);
+
+      // Fetch pending members (only works for owners, silently fails for members)
+      try {
+        const pending = await membersApi.pending();
+        setPendingMembers(pending);
+      } catch {
+        setPendingMembers([]);
+      }
     } catch (err) {
       console.error("Failed to refresh data:", err);
     }
@@ -107,6 +122,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     setUserName(res.user.name);
     setUserEmail(res.user.email);
     setFamilyName(res.user.familyName);
+    setFamilyId(res.user.familyId || "");
     setUserRole(res.user.role as UserRole);
     setIsFirstTime(false);
     setIsLoggedIn(true);
@@ -120,6 +136,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       setUserName(res.user.name);
       setUserEmail(res.user.email);
       setFamilyName(res.user.familyName);
+      setFamilyId(res.user.familyId || "");
       setUserRole(res.user.role as UserRole);
       setIsLoggedIn(true);
       return { success: true, encryptedWallet: res.encryptedWallet };
@@ -198,6 +215,17 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     setMembers(prev => prev.filter(m => m.id !== id));
   }, []);
 
+  const approveMember = useCallback(async (id: string, encryptedWallet?: any) => {
+    const member = await membersApi.approve(id, { encryptedWallet });
+    setMembers(prev => [...prev, member as FamilyMember]);
+    setPendingMembers(prev => prev.filter(p => p.id !== id));
+  }, []);
+
+  const rejectMember = useCallback(async (id: string) => {
+    await membersApi.reject(id);
+    setPendingMembers(prev => prev.filter(p => p.id !== id));
+  }, []);
+
   // ─── Alert Actions (API-backed) ──────────────────────────────────────────
 
   const addAlert = useCallback(async (alert: Omit<SecurityAlert, "id">) => {
@@ -217,14 +245,15 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     setUserName("");
     setUserEmail("");
     setFamilyName("");
+    setFamilyId("");
   }, []);
 
   return (
     <VaultContext.Provider value={{
-      isLoggedIn, userRole, userId, userName, userEmail, familyName, documents, members, alerts, isFirstTime, loading,
+      isLoggedIn, userRole, userId, userName, userEmail, familyName, familyId, documents, members, pendingMembers, alerts, isFirstTime, loading,
       register, login, loginWithRole, logout,
       addDocument, deleteDocument, updateDocumentBlockchain, shareDocument, revokeAccess,
-      addMember, removeMember, addAlert, resetData, refreshData,
+      addMember, removeMember, approveMember, rejectMember, addAlert, resetData, refreshData,
     }}>
       {children}
     </VaultContext.Provider>

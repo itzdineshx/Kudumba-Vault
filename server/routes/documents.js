@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import Document from "../models/Document.js";
 import User from "../models/User.js";
+import Member from "../models/Member.js";
 import Alert from "../models/Alert.js";
 import { auth } from "../middleware/auth.js";
 
@@ -22,10 +23,15 @@ router.get("/", async (req, res) => {
       docs = await Document.find({ userId: req.userId }).sort({ timestamp: -1 });
     } else {
       // For members, find documents shared with them
+      // Use $elemMatch to ensure the SAME array element matches both memberId and revoked
       docs = await Document.find({
         privacy: 'shared',
-        'sharedWith.memberId': req.userId,
-        'sharedWith.revoked': false
+        sharedWith: {
+          $elemMatch: {
+            memberId: req.userId,
+            revoked: false
+          }
+        }
       }).sort({ timestamp: -1 });
     }
     res.json(docs);
@@ -148,9 +154,13 @@ router.post("/:id/share", async (req, res) => {
     const doc = await Document.findOne({ _id: req.params.id, userId: req.userId });
     if (!doc) return res.status(404).json({ error: "Document not found" });
 
+    // Resolve Member._id to the member's User._id so queries by req.userId match
+    const member = await Member.findById(memberId);
+    const memberUserId = member?.memberUserId?.toString() || memberId;
+
     // Remove existing access for this member, add new
-    const filtered = doc.sharedWith.filter(s => s.memberId !== memberId);
-    filtered.push({ memberId, permission, grantedAt: new Date().toISOString(), expiresAt, revoked: false });
+    const filtered = doc.sharedWith.filter(s => s.memberId !== memberUserId);
+    filtered.push({ memberId: memberUserId, permission, grantedAt: new Date().toISOString(), expiresAt, revoked: false });
 
     doc.sharedWith = filtered;
     doc.privacy = "shared";
@@ -163,9 +173,9 @@ router.post("/:id/share", async (req, res) => {
 
     await doc.save();
 
-    // Create alert for the member
+    // Create alert for the member using their User._id
     await Alert.create({
-      userId: memberId,
+      userId: memberUserId,
       type: "share",
       description: `Document "${doc.name}" has been shared with you.`,
       status: "warning",
@@ -184,8 +194,12 @@ router.post("/:id/revoke", async (req, res) => {
     const doc = await Document.findOne({ _id: req.params.id, userId: req.userId });
     if (!doc) return res.status(404).json({ error: "Document not found" });
 
+    // Resolve Member._id to the member's User._id
+    const member = await Member.findById(memberId);
+    const memberUserId = member?.memberUserId?.toString() || memberId;
+
     doc.sharedWith = doc.sharedWith.map(s =>
-      s.memberId === memberId ? { ...s.toObject(), revoked: true } : s
+      s.memberId === memberUserId ? { ...s.toObject(), revoked: true } : s
     );
     await doc.save();
     res.json(doc);

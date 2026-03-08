@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import Member from "../models/Member.js";
 import User from "../models/User.js";
+import Alert from "../models/Alert.js";
 import { auth } from "../middleware/auth.js";
 
 const router = Router();
@@ -14,6 +15,33 @@ router.get("/", async (req, res) => {
     res.json(members);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch members" });
+  }
+});
+
+// GET /api/members/pending — list pending join requests for this owner's family
+// MUST be defined before /:id routes so Express doesn't match "pending" as an id
+router.get("/pending", async (req, res) => {
+  try {
+    const owner = await User.findById(req.userId);
+    if (!owner || owner.role !== "owner") {
+      return res.status(403).json({ error: "Only the family owner can view pending requests" });
+    }
+
+    const pending = await User.find({
+      familyId: owner.familyId,
+      role: "member",
+      status: "pending",
+    }).select("-passwordHash").sort({ createdAt: -1 });
+
+    res.json(pending.map(u => ({
+      id: u._id,
+      name: u.name,
+      email: u.email,
+      relationship: u.relationship,
+      createdAt: u.createdAt,
+    })));
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch pending requests" });
   }
 });
 
@@ -51,7 +79,10 @@ router.post("/", async (req, res) => {
       email,
       passwordHash,
       familyName: owner.familyName,
+      familyId: owner.familyId,
       role: "member",
+      status: "approved",
+      relationship,
       walletAddress: walletAddress || null,
       encryptedWallet: encryptedWallet ? {
         encryptedKey: encryptedWallet.encryptedKey,
@@ -99,6 +130,100 @@ router.delete("/:id", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to remove member" });
+  }
+});
+
+// POST /api/members/:id/approve — approve a pending member and create Member record
+router.post("/:id/approve", async (req, res) => {
+  try {
+    const owner = await User.findById(req.userId);
+    if (!owner || owner.role !== "owner") {
+      return res.status(403).json({ error: "Only the family owner can approve members" });
+    }
+
+    const pendingUser = await User.findOne({
+      _id: req.params.id,
+      familyId: owner.familyId,
+      role: "member",
+      status: "pending",
+    });
+    if (!pendingUser) {
+      return res.status(404).json({ error: "Pending request not found" });
+    }
+
+    // Accept optional encrypted wallet from the owner's client
+    const { encryptedWallet } = req.body;
+    const walletAddress = encryptedWallet?.address || null;
+
+    // Update user status to approved and store wallet if provided
+    pendingUser.status = "approved";
+    if (walletAddress) pendingUser.walletAddress = walletAddress;
+    if (encryptedWallet) {
+      pendingUser.encryptedWallet = {
+        encryptedKey: encryptedWallet.encryptedKey,
+        salt: encryptedWallet.salt,
+        version: encryptedWallet.version || 1,
+      };
+    }
+    await pendingUser.save();
+
+    // Create a Member record linked to the owner
+    const avatarInitials = pendingUser.name.split(" ").map(n => n[0]).join("").toUpperCase();
+    const member = await Member.create({
+      userId: req.userId,
+      name: pendingUser.name,
+      email: pendingUser.email,
+      relationship: pendingUser.relationship || "Family",
+      role: "member",
+      avatarInitials,
+      walletAddress,
+      memberUserId: pendingUser._id,
+      encryptedWallet: encryptedWallet ? {
+        encryptedKey: encryptedWallet.encryptedKey,
+        salt: encryptedWallet.salt,
+        version: encryptedWallet.version || 1,
+      } : undefined,
+    });
+
+    // Alert the approved member
+    await Alert.create({
+      userId: pendingUser._id,
+      type: "approval",
+      description: "Your request to join the family vault has been approved! You can now log in.",
+      status: "resolved",
+    });
+
+    res.json(member);
+  } catch (err) {
+    console.error("Approve member error:", err);
+    res.status(500).json({ error: "Failed to approve member" });
+  }
+});
+
+// POST /api/members/:id/reject — reject a pending member
+router.post("/:id/reject", async (req, res) => {
+  try {
+    const owner = await User.findById(req.userId);
+    if (!owner || owner.role !== "owner") {
+      return res.status(403).json({ error: "Only the family owner can reject members" });
+    }
+
+    const pendingUser = await User.findOne({
+      _id: req.params.id,
+      familyId: owner.familyId,
+      role: "member",
+      status: "pending",
+    });
+    if (!pendingUser) {
+      return res.status(404).json({ error: "Pending request not found" });
+    }
+
+    pendingUser.status = "rejected";
+    await pendingUser.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to reject member" });
   }
 });
 

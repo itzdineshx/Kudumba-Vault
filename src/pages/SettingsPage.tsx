@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import {
   KeyRound, Fingerprint, Shield, Loader2, CheckCircle2,
-  Trash2, Plus, AlertCircle, Eye, EyeOff, Smartphone, Lock
+  Trash2, Plus, AlertCircle, Eye, EyeOff, Smartphone, Lock, Hash, Copy
 } from "lucide-react";
 import { verificationApi, VerificationStatusResponse } from "@/services/api";
 import {
@@ -28,7 +28,7 @@ import {
 } from "@/services/verification";
 
 const SettingsPage = () => {
-  const { userId, userName, userRole } = useVault();
+  const { userId, userName, userRole, familyId } = useVault();
 
   const [status, setStatus] = useState<VerificationStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -174,6 +174,39 @@ const SettingsPage = () => {
       </div>
 
       {/* Security Overview */}
+      {userRole === "owner" && familyId && (
+        <Card className="border-blue-500/20 bg-blue-500/5">
+          <CardContent className="p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                <Hash className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">Your Family ID</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Share this code with family members so they can join your vault from the login page.
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="rounded-lg bg-background px-4 py-2 font-mono text-lg font-bold tracking-widest">{familyId}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => {
+                      navigator.clipboard.writeText(familyId);
+                      toast({ title: "Family ID copied!" });
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" /> Copy
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Security Overview - Document Verification */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-5">
           <div className="flex items-start gap-3">
